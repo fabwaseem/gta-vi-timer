@@ -11,6 +11,7 @@ import { Pause, Play, Share2, Youtube } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import AudioVisualizer from "./components/AudioVisualizer";
+import { CursorEffect } from "./components/CursorEffect";
 
 export default function Home() {
   const [timeLeft, setTimeLeft] = useState({
@@ -21,6 +22,7 @@ export default function Home() {
   });
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const [daysSinceTrailer, setDaysSinceTrailer] = useState(0);
 
@@ -31,9 +33,7 @@ export default function Home() {
   const analyzerRef = useRef<AnalyserNode | null>(null);
   const animationFrameRef = useRef<number | null>(null);
 
-  const [currentTime] = useState(new Date());
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-
+  const [currentTime, setCurrentTime] = useState(new Date());
   const [showShareMenu, setShowShareMenu] = useState(false);
 
   const setupAudioContext = () => {
@@ -92,23 +92,37 @@ export default function Home() {
     animationFrameRef.current = requestAnimationFrame(updateAudioData);
   };
 
+  // Update timer function
+  const updateTimer = () => {
+    const now = new Date();
+    setCurrentTime(now);
+
+    const days = differenceInDays(targetDate, now);
+    const hours = differenceInHours(targetDate, now) % 24;
+    const minutes = differenceInMinutes(targetDate, now) % 60;
+    const seconds = differenceInSeconds(targetDate, now) % 60;
+
+    const daysSince = differenceInDays(now, trailerDate);
+
+    setTimeLeft({ days, hours, minutes, seconds });
+    setDaysSinceTrailer(daysSince);
+  };
+
+  // Initialize timer
   useEffect(() => {
-    const timer = setInterval(() => {
-      const now = new Date();
+    // Initial update
+    updateTimer();
 
-      const days = differenceInDays(targetDate, now);
-      const hours = differenceInHours(targetDate, now) % 24;
-      const minutes = differenceInMinutes(targetDate, now) % 60;
-      const seconds = differenceInSeconds(targetDate, now) % 60;
+    // Set up interval
+    timerRef.current = setInterval(updateTimer, 1000);
 
-      const daysSince = differenceInDays(now, trailerDate);
-
-      setTimeLeft({ days, hours, minutes, seconds });
-      setDaysSinceTrailer(daysSince);
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [targetDate, trailerDate]);
+    // Cleanup
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, []); // Empty dependency array since we're using refs
 
   useEffect(() => {
     return () => {
@@ -116,15 +130,6 @@ export default function Home() {
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, []);
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      setMousePosition({ x: e.clientX, y: e.clientY });
-    };
-
-    window.addEventListener("mousemove", handleMouseMove);
-    return () => window.removeEventListener("mousemove", handleMouseMove);
   }, []);
 
   // Calculate dynamic styles based on audio data
@@ -147,28 +152,7 @@ export default function Home() {
 
   return (
     <main className="relative min-h-screen overflow-hidden">
-      {/* Cursor Effect */}
-      <motion.div
-        className="fixed w-6 h-6 rounded-full pointer-events-none z-50 mix-blend-screen"
-        animate={{
-          x: mousePosition.x - 12,
-          y: mousePosition.y - 12,
-          transition: {
-            type: "spring",
-            damping: 15,
-            stiffness: 150,
-            mass: 0.1,
-          },
-        }}
-        style={{
-          background: `radial-gradient(circle, rgba(255,179,102,${
-            0.5 + (audioData / 255) * 0.5
-          }) 0%, rgba(255,179,102,0) 70%)`,
-          boxShadow: `0 0 ${10 + (audioData / 255) * 20}px rgba(255,179,102,${
-            0.4 + (audioData / 255) * 0.3
-          })`,
-        }}
-      />
+      <CursorEffect audioData={audioData} />
       <audio ref={audioRef} loop className="hidden">
         <source src="/music.mp3" type="audio/mpeg" />
       </audio>
