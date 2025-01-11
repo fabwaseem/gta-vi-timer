@@ -3,19 +3,116 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 0, 0, 0;
+  --background-end-rgb: 20, 20, 20;
+  --neon-pink: #ff2e89;
+  --neon-blue: #00ffff;
+  --gta-purple: #6d4dff;
+  --gta-pink: #ff2e89;
+  --gta-orange: #ffb366;
+  --gta-highlight: #fff5f9;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  color: rgb(var(--foreground-rgb));
+  background-color: black;
+}
+
+.bg-gradient-overlay {
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.7) 0%,
+    rgba(0, 0, 0, 0.5) 50%,
+    rgba(0, 0, 0, 0.8) 100%
+  );
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+    text-shadow: 0 0 15px var(--gta-purple), 0 0 25px var(--gta-pink),
+      0 0 35px var(--gta-orange), 0 0 45px var(--gta-purple);
+    color: var(--gta-highlight);
+  }
+  50% {
+    opacity: 0.95;
+    text-shadow: 0 0 25px var(--gta-purple), 0 0 35px var(--gta-pink),
+      0 0 45px var(--gta-orange), 0 0 55px var(--gta-purple);
+    color: white;
+  }
+}
+
+.neon-text {
+  animation: pulse 3s infinite;
+  background: linear-gradient(to bottom, #6d4dff 0%, #ff2e89 50%, #ffb366 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 15px rgba(255, 46, 137, 0.7));
+}
+
+.glass-effect {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+}
+
+.timer-box {
+  background: rgba(255, 46, 137, 0.15);
+  backdrop-filter: blur(12px);
+  border: 2px solid rgba(255, 46, 137, 0.4);
+  box-shadow: 0 0 25px rgba(255, 46, 137, 0.3);
+}
+
+@keyframes neonPulseBlue {
+  0%,
+  100% {
+    opacity: 1;
+    text-shadow: 0 0 15px var(--neon-blue), 0 0 25px var(--neon-blue),
+      0 0 35px var(--neon-blue);
+  }
+  50% {
+    opacity: 0.9;
+    text-shadow: 0 0 25px var(--neon-blue), 0 0 35px var(--neon-blue),
+      0 0 45px var(--neon-blue);
+  }
+}
+
+.neon-text-blue {
+  animation: neonPulseBlue 2s infinite;
+  color: #fff;
+}
+
+.audio-reactive {
+  transition: all 0.1s ease-out;
+}
+
+@keyframes audioGlow {
+  0% {
+    box-shadow: 0 0 10px var(--neon-pink);
+  }
+  100% {
+    box-shadow: 0 0 30px var(--neon-pink);
+  }
+}
+
+@keyframes particleGlow {
+  0%,
+  100% {
+    opacity: 0.7;
+    filter: brightness(1);
+  }
+  50% {
+    opacity: 1;
+    filter: brightness(1.2);
+  }
+}
+
+.particle {
+  animation: particleGlow 2s infinite;
+  mix-blend-mode: screen;
+  will-change: transform, opacity;
 }

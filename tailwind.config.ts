@@ -8,9 +8,9 @@ export default {
   ],
   theme: {
     extend: {
-      colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
+      fontFamily: {
+        orbitron: ["var(--font-orbitron)"],
+        "press-start": ["var(--font-press-start)"],
       },
     },
   },
