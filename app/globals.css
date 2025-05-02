@@ -20,15 +20,14 @@ body {
 }
 
 .bg-gradient-overlay {
-  background: linear-gradient(
-    to bottom,
-    rgba(0, 0, 0, 0.7) 0%,
-    rgba(0, 0, 0, 0.5) 50%,
-    rgba(0, 0, 0, 0.8) 100%
-  );
+  background: linear-gradient(to bottom,
+      rgba(0, 0, 0, 0.7) 0%,
+      rgba(0, 0, 0, 0.5) 50%,
+      rgba(0, 0, 0, 0.8) 100%);
 }
 
 @keyframes pulse {
+
   0%,
   100% {
     opacity: 1;
@@ -36,6 +35,7 @@ body {
       0 0 35px var(--gta-orange), 0 0 45px var(--gta-purple);
     color: var(--gta-highlight);
   }
+
   50% {
     opacity: 0.95;
     text-shadow: 0 0 25px var(--gta-purple), 0 0 35px var(--gta-pink),
@@ -68,12 +68,14 @@ body {
 }
 
 @keyframes neonPulseBlue {
+
   0%,
   100% {
     opacity: 1;
     text-shadow: 0 0 15px var(--neon-blue), 0 0 25px var(--neon-blue),
       0 0 35px var(--neon-blue);
   }
+
   50% {
     opacity: 0.9;
     text-shadow: 0 0 25px var(--neon-blue), 0 0 35px var(--neon-blue),
@@ -94,17 +96,20 @@ body {
   0% {
     box-shadow: 0 0 10px var(--neon-pink);
   }
+
   100% {
     box-shadow: 0 0 30px var(--neon-pink);
   }
 }
 
 @keyframes particleGlow {
+
   0%,
   100% {
     opacity: 0.7;
     filter: brightness(1);
   }
+
   50% {
     opacity: 1;
     filter: brightness(1.2);

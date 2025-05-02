@@ -7,11 +7,18 @@ import {
   differenceInSeconds,
 } from "date-fns";
 import { motion } from "framer-motion";
-import { Pause, Play, Share2, Youtube } from "lucide-react";
+import {
+  Info,
+  Pause,
+  Play,
+  Share2,
+  Youtube
+} from "lucide-react";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import AudioVisualizer from "./components/AudioVisualizer";
 import { CursorEffect } from "./components/CursorEffect";
+import SettingsPanel from "./components/SettingsPanel";
 
 export default function Home() {
   const [timeLeft, setTimeLeft] = useState({
@@ -27,14 +34,28 @@ export default function Home() {
   const [daysSinceTrailer, setDaysSinceTrailer] = useState(0);
 
   const trailerDate = new Date("2023-12-05");
-  const targetDate = new Date("2025-09-23");
+  const targetDate = new Date("2026-05-26");
 
   const [audioData, setAudioData] = useState<number>(0);
   const analyzerRef = useRef<AnalyserNode | null>(null);
   const animationFrameRef = useRef<number | null>(null);
 
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [showShareMenu, setShowShareMenu] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+
+  // Add particle effect state
+  const [particles, setParticles] = useState<
+    Array<{
+      x: number;
+      y: number;
+      size: number;
+      opacity: number;
+      speedX: number;
+      speedY: number;
+    }>
+  >([]);
+
+  const [showInfo, setShowInfo] = useState(false);
 
   const setupAudioContext = () => {
     if (!audioRef.current) return;
@@ -136,6 +157,39 @@ export default function Home() {
   const pulseScale = 1 + (audioData / 255) * 0.5;
   const glowIntensity = Math.floor((audioData / 255) * 30);
 
+  // Add particle effect
+  useEffect(() => {
+    if (!isPlaying) return;
+
+    const interval = setInterval(() => {
+      setParticles((prev) => {
+        const newParticles = prev
+          .map((particle) => ({
+            ...particle,
+            x: particle.x + particle.speedX,
+            y: particle.y + particle.speedY,
+            opacity: particle.opacity - 0.02,
+          }))
+          .filter((particle) => particle.opacity > 0);
+
+        if (Math.random() < 0.3) {
+          newParticles.push({
+            x: Math.random() * window.innerWidth,
+            y: window.innerHeight,
+            size: Math.random() * 3 + 2,
+            opacity: 1,
+            speedX: (Math.random() - 0.5) * 2,
+            speedY: -Math.random() * 2 - 1,
+          });
+        }
+
+        return newParticles;
+      });
+    }, 50);
+
+    return () => clearInterval(interval);
+  }, [isPlaying]);
+
   const shareContent = () => {
     const shareData = {
       title: "GTA VI Countdown Timer",
@@ -145,56 +199,101 @@ export default function Home() {
 
     if (navigator.share) {
       navigator.share(shareData);
-    } else {
-      setShowShareMenu(true);
     }
   };
 
+  // Add new functions for settings
+  const handleVolumeChange = (newVolume: number) => {
+    if (audioRef.current) {
+      audioRef.current.volume = newVolume;
+    }
+  };
+
+
   return (
     <main className="relative min-h-screen overflow-hidden">
+
+
       <CursorEffect audioData={audioData} />
       <audio ref={audioRef} loop className="hidden">
         <source src="/music.mp3" type="audio/mpeg" />
       </audio>
 
-      {/* Background Image with reactive blur and brightness */}
+      {/* Particle Effect with density control */}
+      {isPlaying && (
+        <div className="absolute inset-0 z-0">
+          {particles.map((particle, index) => (
+            <motion.div
+              key={index}
+              className="absolute rounded-full"
+              style={{
+                width: particle.size,
+                height: particle.size,
+                left: particle.x,
+                top: particle.y,
+                background: `rgba(255, 46, 137, ${particle.opacity})`,
+                boxShadow: `0 0 ${particle.size * 2}px rgba(255, 46, 137, ${
+                  particle.opacity * 0.5
+                })`,
+              }}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Enhanced Background Image */}
       <Image
         src="/gta-vi-bg.jpg"
         alt="GTA VI Background"
         fill
         className="object-cover object-center transition-all duration-100"
         style={{
-          filter: `blur(${(audioData / 255) * 10}px) brightness(${
-            0.8 + (audioData / 255) * 1
-          })`,
+          filter: `blur(${
+            (audioData / 255) * 8
+          }px) brightness(${
+            0.7 + (audioData / 255) * 1.2
+          }) contrast(${1 + (audioData / 255) * 0.3 })`,
         }}
         priority
       />
 
-      {/* Gradient Overlay with reactive opacity */}
+      {/* Enhanced Gradient Overlay */}
       <div
-        className="absolute inset-0  transition-all duration-100"
+        className="absolute inset-0 transition-all duration-100"
         style={{
-          // opacity: 0.4 + (audioData / 255) * 0.3,
           background: `linear-gradient(
             to bottom,
-            rgba(0, 0, 0, ${0.6 - (audioData / 255) * 0.3}) 0%,
-            rgba(0, 0, 0, ${0.4 - (audioData / 255) * 0.2}) 50%,
-            rgba(0, 0, 0, ${0.7 - (audioData / 255) * 0.3}) 100%
+            rgba(0, 0, 0, ${
+              0.7 - (audioData / 255) * 0.4
+            }) 0%,
+            rgba(0, 0, 0, ${
+              0.5 - (audioData / 255) * 0.3
+            }) 50%,
+            rgba(0, 0, 0, ${
+              0.8 - (audioData / 255) * 0.4
+            }) 100%
           )`,
         }}
       />
 
-      {/* Audio Visualizer */}
-      <AudioVisualizer audioData={audioData} isPlaying={isPlaying} />
+      {/* Audio Visualizer with intensity control */}
+      <AudioVisualizer
+        audioData={audioData }
+        isPlaying={isPlaying}
+      />
 
-      {/* Music Controls - Re-enable volume control */}
+      {/* Enhanced Music Controls */}
       <div className="absolute top-4 right-4 z-20 flex gap-4">
         <motion.button
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
           onClick={togglePlay}
           className="p-3 glass-effect rounded-full text-white hover:text-[#ff2e89] transition-colors"
+          style={{
+            boxShadow: `0 0 ${
+              10 + (audioData / 255) * 20
+            }px rgba(255, 46, 137, ${0.3 + (audioData / 255) * 0.5})`,
+          }}
         >
           {isPlaying ? <Pause size={24} /> : <Play size={24} />}
         </motion.button>
@@ -203,59 +302,62 @@ export default function Home() {
           whileTap={{ scale: 0.95 }}
           onClick={shareContent}
           className="p-3 glass-effect rounded-full text-white hover:text-[#ff2e89] transition-colors"
+          style={{
+            boxShadow: `0 0 ${
+              10 + (audioData / 255) * 20
+            }px rgba(255, 46, 137, ${0.3 + (audioData / 255) * 0.5})`,
+          }}
         >
           <Share2 size={24} />
         </motion.button>
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => setShowInfo(!showInfo)}
+          className="p-3 glass-effect rounded-full text-white hover:text-[#ff2e89] transition-colors"
+          style={{
+            boxShadow: `0 0 ${
+              10 + (audioData / 255) * 20
+            }px rgba(255, 46, 137, ${0.3 + (audioData / 255) * 0.5})`,
+          }}
+        >
+          <Info size={24} />
+        </motion.button>
       </div>
 
-      {/* Share Menu */}
-      {showShareMenu && (
+      {/* Info Panel */}
+      {showInfo && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="absolute top-20 right-4 z-20 glass-effect p-4 rounded-lg"
+          className="absolute top-20 right-4 z-20 glass-effect p-6 rounded-lg w-80"
+          style={{
+            boxShadow: `0 0 ${
+              10 + (audioData / 255) * 20
+            }px rgba(255, 46, 137, ${0.3 + (audioData / 255) * 0.5})`,
+          }}
         >
-          <div className="flex flex-col gap-2">
-            <button
-              onClick={() =>
-                window.open(
-                  `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-                    `Only ${timeLeft.days} days, ${timeLeft.hours} hours until GTA VI! Check out the countdown timer!`
-                  )}&url=${encodeURIComponent(window.location.href)}`,
-                  "_blank"
-                )
-              }
-              className="text-white hover:text-[#ff2e89] transition-colors"
-            >
-              Share on Twitter
-            </button>
-            <button
-              onClick={() =>
-                window.open(
-                  `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
-                    window.location.href
-                  )}`,
-                  "_blank"
-                )
-              }
-              className="text-white hover:text-[#ff2e89] transition-colors"
-            >
-              Share on Facebook
-            </button>
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText(window.location.href);
-                setShowShareMenu(false);
-              }}
-              className="text-white hover:text-[#ff2e89] transition-colors"
-            >
-              Copy Link
-            </button>
-          </div>
+          <h2 className="text-xl font-bold text-white mb-4 font-orbitron">
+            About GTA VI
+          </h2>
+          <p className="text-white/80 mb-4">
+            Grand Theft Auto VI is the upcoming installment in the GTA series,
+            set to release on May 26, 2026.
+          </p>
+          <p className="text-white/80">
+            This countdown timer was created to celebrate the anticipation of
+            the game&apos;s release.
+          </p>
         </motion.div>
       )}
 
-      {/* Content */}
+      {/* Settings Panel */}
+      <SettingsPanel
+        audioData={audioData}
+        onVolumeChange={handleVolumeChange}
+      />
+
+      {/* Enhanced Content */}
       <div className="relative z-10 min-h-screen flex flex-col items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -265,15 +367,18 @@ export default function Home() {
           <motion.img
             src="/logo.png"
             alt="GTA VI Logo"
-            className=" mx-auto font-bold mb-8 neon-text font-press-start w-44"
+            className="mx-auto font-bold mb-8 neon-text font-press-start w-44"
             animate={{
               scale: pulseScale,
+              rotate: isHovered ? [0, -5, 5, -5, 0] : 0,
             }}
-            transition={{ duration: 0.1 }}
+            transition={{ duration: 0.5 }}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
           />
 
           <p className="text-sm md:text-base mb-12 font-orbitron">
-            Fall 2025 <span className="neon-text-blue">(Unconfirmed)</span>
+            26 May 2026 <span className="neon-text-blue">(Confirmed)</span>
           </p>
 
           {/* Improved Timer Boxes */}
@@ -356,7 +461,7 @@ export default function Home() {
         </motion.div>
       </div>
 
-      {/* Credits */}
+      {/* Enhanced Credits */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -368,6 +473,11 @@ export default function Home() {
           target="_blank"
           rel="noopener noreferrer"
           className="text-sm text-white/70 hover:text-[#ff2e89] transition-colors font-orbitron"
+          style={{
+            textShadow: `0 0 ${
+              5 + (audioData / 255) * 10
+            }px rgba(255, 46, 137, ${0.3 + (audioData / 255) * 0.5})`,
+          }}
         >
           Created by Waseem Anjum
         </a>
